@@ -7,10 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.mockito.Matchers;
+import ua.yandex.shad.collections.DynamicList;
 import ua.yandex.shad.tries.RWayTrie;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TestPrefixMatches {
     private PrefixMatches controlSystem;
@@ -139,7 +137,7 @@ public class TestPrefixMatches {
     public void wordsWithPrefix_VerifyCallingMethod() {
         String prefix = "you";
         int k = 2;
-        List trieResult = new ArrayList<String>();
+        DynamicList<String> trieResult = new DynamicList<>();
         trieResult.add("you");
         when(trie.wordsWithPrefix(prefix)).thenReturn(trieResult);
         controlSystem.wordsWithPrefix(prefix, k);
@@ -147,18 +145,18 @@ public class TestPrefixMatches {
     }
 
     @Test
-    public void wordsWithPrefix_DefaultMethod_WithMinimalLengthWordAtTheBeginning() {
+    public void wordsWithPrefix_CheckIfReturnsAllWordsWithThreeDifferentLength() {
         String prefix = "you";
-        String[] input = {"you", "young", "youth", "your", "yours",
-                "youngster", "youngish", "younker"};
+        String[] input = {"you", "your", "young", "yours", "youth", "younker",
+                "youngish",  "youngster"};
         int count = 5;
-        List trieResult = new ArrayList<String>();
+        DynamicList<String> trieResult = new DynamicList<>();
 
         for (String s : input) {
             trieResult.add(s);
         }
 
-        when(trie.wordsWithPrefix(prefix)).thenReturn((Iterable<String>) trieResult);
+        when(trie.wordsWithPrefix(prefix)).thenReturn(trieResult);
         Iterable<String> actualResult = controlSystem.wordsWithPrefix(prefix);
         int size = 0;
         for(String s : actualResult) {
@@ -169,18 +167,19 @@ public class TestPrefixMatches {
     }
 
     @Test
-    public void wordsWithPrefix_WithMaximumLengthWordAtTheBeginning() {
+    public void wordsWithPrefix_CheckIfReturnsAllWordsWithCertainAmountOfDifferentLength() {
         String prefix = "you";
-        String[] input = {"youngster", "young", "youth", "your", "yours", "youngish", "younker"};
-        int k = 3;
-        int count = 5;
-        List trieResult = new ArrayList<String>();
+        String[] input = {"you", "your", "yous", "young", "yours", "youth", "younker",
+                "youward", "younler", "youngish",  "youngster"};
+        int k = 4;
+        int count = 9;
+        DynamicList<String> trieResult = new DynamicList<>();
 
         for (String s : input) {
             trieResult.add(s);
         }
 
-        when(trie.wordsWithPrefix(prefix)).thenReturn((Iterable<String>)trieResult);
+        when(trie.wordsWithPrefix(prefix)).thenReturn(trieResult);
         Iterable<String> actualResult = controlSystem.wordsWithPrefix(prefix, k);
         int size = 0;
         for(String s : actualResult) {

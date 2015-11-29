@@ -1,49 +1,59 @@
 package ua.yandex.shad.tries;
 
-import java.util.ArrayList;
-import java.util.List;
+import ua.yandex.shad.collections.DynamicList;
+
 import java.util.Locale;
 
 public class RWayTrie implements Trie {
     /*R is the power of alphabet*/
     public static final int R = 26;
-
-    //public static final int Null = -1;
-    private Tuple root = new Tuple(0);
+    Node root = new Node(0, "");
     private int size = 0;
+    static class Node extends Tuple{
+        Node[] next = new Node[R];
+        private Node(int weight, String name) {
+            super(weight, name);
+        }
+        private Node(String name) {
+            super(name);
+        }
+    }
 
-        @Override
-        public void add(String word)
-                throws IllegalArgumentException, NullPointerException {
-            if (word == null) {
-                throw new NullPointerException();
-            }
-            if (word.equals("")) {
-                return;
-            }
-            checkWordCorrectness(word);
+    @Override
+    public void add(String word)
+            throws IllegalArgumentException, NullPointerException {
+        if (word == null) {
+            throw new NullPointerException();
+        }
+        if (word.equals("")) {
+            return;
+        }
+        checkWordCorrectness(word);
         /*tuple that corresponds symbol in the word*/
-        Tuple currentTuple = root;
+        Node currentTuple = root;
         int length = word.length();
         String wordLowerCase = word.toLowerCase(Locale.ENGLISH);
 
         /*if it's necessary, create new Tuple*/
+        StringBuffer current = new StringBuffer();
         for (int i = 0; i < length - 1; i++) {
             char c = wordLowerCase.charAt(i);
-            if (currentTuple.next(c - 'a') == null) {
-                currentTuple.setChild(c - 'a', new Tuple());
+            current.append(c);
+            if (currentTuple.next[c - 'a'] == null) {
+                currentTuple.next[c - 'a'] = new Node(current.toString());
             }
-            currentTuple = currentTuple.next(c - 'a');
+            currentTuple = currentTuple.next[c - 'a'];
         }
         /*the tuple that corresponds the last symbol in word should have
         * not negative weight*/
         char c = wordLowerCase.charAt(length - 1);
-        if (currentTuple.next(c - 'a') == null) {
-            currentTuple.setChild(c - 'a', new Tuple(length));
+        current.append(c);
+        if (currentTuple.next[c - 'a'] == null) {
+            currentTuple.next[c - 'a'] = new Node(length, current.toString());
             size++;
         }
         else {
-            currentTuple = currentTuple.next(c - 'a');
+            currentTuple = currentTuple.next[c - 'a'];
             if (currentTuple.getWeight() == Tuple.NULL) {
                 size++;
             }
@@ -55,7 +65,7 @@ public class RWayTrie implements Trie {
     public boolean contains(String word)
             throws NullPointerException, IllegalArgumentException {
         /*The way of Tuples that corresponds to word*/
-        Tuple[] wordTuples = null;
+        Node[] wordTuples = null;
         try {
             wordTuples = checkWordExisting(word);
         } catch (IllegalArgumentException e) {
@@ -94,7 +104,7 @@ public class RWayTrie implements Trie {
         }
 
         /*The way of Tuples that corresponds to word*/
-        Tuple[] wordTuples = checkWordExisting(word);
+        Node[] wordTuples = checkWordExisting(word);
         int length = word.length();
         String wordLowerCase = word.toLowerCase(Locale.ENGLISH);
         size--;
@@ -104,7 +114,7 @@ public class RWayTrie implements Trie {
         for (int i = length - 1; i >= 0; i--) {
             boolean empty = true;
             for (int j = 0; j < R; j++) {
-                if (wordTuples[i].next(j) != null) {
+                if (wordTuples[i].next[j] != null) {
                     empty = false;
                 }
             }
@@ -112,9 +122,9 @@ public class RWayTrie implements Trie {
                 if (wordTuples[i].getWeight() == Tuple.NULL) {
                     int index = wordLowerCase.charAt(i) - 'a';
                     if (i >= 1) {
-                        wordTuples[i - 1].setChild(index, null);
+                        wordTuples[i - 1].next[index] = null;
                     } else {
-                        root.setChild(index, null);
+                        root.next[index] = null;
                     }
                 }
             } else {
@@ -135,36 +145,26 @@ public class RWayTrie implements Trie {
     public Iterable<String> wordsWithPrefix(String prefix)
             throws IllegalArgumentException, NullPointerException {
 
-        Tuple[] prefixTuples = checkWordExisting(prefix);
-        if (prefixTuples.length < prefix.length()) {
-            return new ArrayList<String>();
-        }
-        String prefixLowerCase = prefix.toLowerCase(Locale.ENGLISH);
-        int length;
-        if (prefix.length() != 0) {
-            length = prefix.length();
+        DynamicList<String> list = new DynamicList<>();
+        DynamicList<Node> topNode = new DynamicList<>();
+        if (prefix == "") {
+            topNode.add(root);
         } else {
-            length = 1;
+            Node[] prefixTuples = checkWordExisting(prefix);
+            if (prefixTuples.length < prefix.length()) {
+                return new DynamicList<>();
+            }
+            topNode.add(prefixTuples[prefixTuples.length - 1]);
         }
 
-        List<String> list = new ArrayList<String>();
         /*find all word which begins from prefix*/
-        gatherWords(prefixTuples[length - 1], prefixLowerCase, list);
+        gatherWords(topNode, list);
         return list;
     }
 
     @Override
     public int size() {
         return size;
-    }
-
-    public Tuple getRoot() {
-        return root;
-    }
-
-    /*if null is set, trie will be deleted*/
-    public void setRoot(Tuple value) {
-        this.root = value;
     }
 
     /*check whether all symbols are from English alphabet*/
@@ -183,45 +183,51 @@ public class RWayTrie implements Trie {
     /*Return the Tuples way that corresponds to the word.
      If any Tuple does not exist, return the empty way.
       Throw exception if word with non-English symbols*/
-    private Tuple[] checkWordExisting(String word)
+    private Node[] checkWordExisting(String word)
             throws NullPointerException, IllegalArgumentException {
         if (word == null) {
             throw new NullPointerException();
         }
 
         if (word.equals("")) {
-            Tuple[] wordTuples = {root};
+            Node[] wordTuples = {root};
             return wordTuples;
         }
         checkWordCorrectness(word);
 
         int length = word.length();
-        Tuple[] wordTuples = new Tuple[length];
+        Node[] wordTuples = new Node[length];
         String wordLowerCase = word.toLowerCase(Locale.ENGLISH);
         /*build the way of Tuples that corresponds the word*/
         char c = wordLowerCase.charAt(0);
-        wordTuples[0] = root.next(c - 'a');
+        wordTuples[0] = root.next[c - 'a'];
         int i = 1;
         while (wordTuples[i - 1] != null && i < length) {
             c = wordLowerCase.charAt(i);
-            wordTuples[i] = wordTuples[i - 1].next(c - 'a');
+            wordTuples[i] = wordTuples[i - 1].next[c - 'a'];
             i++;
         }
         if (wordTuples[length - 1] == null) {
-            return new Tuple[0];
+            return new Node[0];
         }
         return wordTuples;
     }
 
-    /*find all words with prefix recursively*/
-    private void gatherWords(Tuple top, String prefix, List<String> list) {
-        if (top.getWeight() > 0) {
-            list.add(prefix);
+    private void gatherWords(DynamicList<Node> previousTuples, DynamicList<String> list) {
+        if (previousTuples.isEmpty()) {
+            return;
         }
-        for (int i = 0; i < R; i++) {
-            if (top.next(i) != null) {
-                gatherWords(top.next(i), prefix + (char) ('a' + i), list);
+        DynamicList<Node> currentTuples = new DynamicList<>();
+        for (Node i : previousTuples) {
+            if (i.getWeight() > 0) {
+                list.add(i.getName());
+            }
+            for (int j = 0; j < R; j++) {
+                if (i.next[j] != null) {
+                    currentTuples.add(i.next[j]);
+                }
             }
         }
+        gatherWords(currentTuples, list);
     }
 }

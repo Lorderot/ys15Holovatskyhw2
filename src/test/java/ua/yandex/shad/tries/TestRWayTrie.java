@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 public class TestRWayTrie {
-    private RWayTrie trie;
+    private RWayTrie trie = new RWayTrie();
 
     @Before
     public void initializingBeforeEachTest() {
@@ -23,13 +23,13 @@ public class TestRWayTrie {
     public void testAdd_CheckTheWeightOfAddedTuple() {
         String word = "atestz";
         trie.add(word);
-        Tuple temporary = trie.getRoot();
+        RWayTrie.Node temporary = trie.root;
         int i;
         for (i = 0; i < word.length() - 1; i++) {
-            temporary = temporary.next(word.charAt(i) - 'a');
+            temporary = temporary.next[word.charAt(i) - 'a'];
             assertEquals(Tuple.NULL, temporary.getWeight());
         }
-        temporary = temporary.next(word.charAt(i) - 'a');
+        temporary = temporary.next[word.charAt(i) - 'a'];
         assertNotEquals(Tuple.NULL, temporary.getWeight());
     }
 
@@ -41,13 +41,13 @@ public class TestRWayTrie {
         trie.add(existing);
         trie.add(added);
 
-        Tuple temporary = trie.getRoot();
+        RWayTrie.Node temporary = trie.root;
         int i;
         for (i = 0; i < existing.length() - 1; i++) {
-            temporary = temporary.next(existing.charAt(i) - 'a');
+            temporary = temporary.next[existing.charAt(i) - 'a'];
             assertEquals(Tuple.NULL, temporary.getWeight());
         }
-        temporary = temporary.next(existing.charAt(i) - 'a');
+        temporary = temporary.next[existing.charAt(i) - 'a'];
         assertNotEquals(Tuple.NULL, temporary.getWeight());
     }
 
@@ -59,13 +59,13 @@ public class TestRWayTrie {
         trie.add(existing);
         trie.add(added);
 
-        Tuple temporary = trie.getRoot();
+        RWayTrie.Node temporary = trie.root;
         int i;
         for (i = 0; i < added.length() - 1; i++) {
-            temporary = temporary.next(added.charAt(i) - 'a');
+            temporary = temporary.next[added.charAt(i) - 'a'];
             assertEquals(Tuple.NULL, temporary.getWeight());
         }
-        temporary = temporary.next(added.charAt(i) - 'a');
+        temporary = temporary.next[added.charAt(i) - 'a'];
         assertNotEquals(Tuple.NULL, temporary.getWeight());
     }
 
@@ -86,9 +86,9 @@ public class TestRWayTrie {
         String word = "tEsT";
         trie.add(word);
         word = word.toLowerCase(Locale.ENGLISH);
-        Tuple temporary = trie.getRoot();
+        RWayTrie.Node temporary = trie.root;
         for (int i = 0; i < word.length(); i++) {
-            temporary = temporary.next(word.charAt(i) - 'a');
+            temporary = temporary.next[word.charAt(i) - 'a'];
             assertNotNull(temporary);
         }
     }
@@ -175,7 +175,7 @@ public class TestRWayTrie {
         assertEquals(true, result);
 
         word = word.toLowerCase(Locale.ENGLISH);
-        Tuple deletedTuple = trie.getRoot().next(word.charAt(0) - 'a');
+        Tuple deletedTuple = trie.root.next[word.charAt(0) - 'a'];
         assertEquals(null, deletedTuple);
     }
 
@@ -195,15 +195,15 @@ public class TestRWayTrie {
         trie.add(exist);
         boolean result = trie.delete(delete);
 
-        Tuple temporary = trie.getRoot();
+        RWayTrie.Node temporary = trie.root;
         int i;
         char c;
         for (i = 0; i < delete.length() - 1; i++) {
             c = delete.charAt(i);
-            temporary = temporary.next(c - 'a');
+            temporary = temporary.next[c - 'a'];
         }
         c = delete.charAt(i);
-        temporary = temporary.next(c - 'a');
+        temporary = temporary.next[c - 'a'];
         assertEquals(Tuple.NULL, temporary.getWeight());
         assertEquals(true, result);
     }
@@ -231,17 +231,17 @@ public class TestRWayTrie {
         boolean result = trie.delete(delete);
         assertEquals(true, result);
 
-        Tuple temporary = trie.getRoot();
+        RWayTrie.Node temporary = trie.root;
         for (int i = 0; i < exist.length(); i++) {
             char c = exist.charAt(i);
-            temporary = temporary.next(c - 'a');
+            temporary = temporary.next[c - 'a'];
             assertNotEquals(null, temporary);
         }
 
         for (int i = exist.length(); i < delete.length(); i++) {
             char c = delete.charAt(i);
 
-            temporary = temporary.next(c - 'a');
+            temporary = temporary.next[c - 'a'];
             assertEquals(null, temporary);
         }
     }
@@ -312,7 +312,7 @@ public class TestRWayTrie {
     }
 
     @Test
-    public void testWords_VerifyingAnswerCorrectness() {
+    public void testWordsWithPrefix_VerifyingAmountOfWordsWithPrefix() {
         trie.add("first");
         trie.add("second");
         trie.add("third");
@@ -330,6 +330,43 @@ public class TestRWayTrie {
             count++;
         }
 
+        assertEquals(trie.size(), count);
+    }
+
+    @Test
+    public void testWordsWithPrefix_VerifyingTheOrderOfWords() {
+        String prefix = "you";
+        String[] input = {"you", "your", "young", "yours", "youth", "younker",
+                "youngish",  "youngster"};
+        for (String i : input) {
+            trie.add(i);
+        }
+
+        Iterable<String> container = trie.wordsWithPrefix(prefix);
+        assertNotNull(container);
+
+        int i = 0;
+        for(String s : container) {
+            assertEquals(input[i++], s);
+        }
+    }
+
+    @Test
+    public void testWords_CheckIfReturnsAllWords() {
+        String[] input = {"you", "your", "young", "yours", "youth", "younker",
+                "youngish",  "youngster", "let", "write", "a", "little", "bit",
+                "more", "words", "maybe", "there", "is", "enough", "words", "now"};
+        for (String i : input) {
+            trie.add(i);
+        }
+
+        Iterable<String> container = trie.words();
+        assertNotNull(container);
+
+        int count = 0;
+        for (String i : container) {
+            count++;
+        }
         assertEquals(trie.size(), count);
     }
 
@@ -356,7 +393,7 @@ public class TestRWayTrie {
     }
 
     @Test
-    public void testWordsWithPrefix_PrefixIsWord() {
+    public void testWordsWithPrefix_ReturnedValue() {
         String prefix = "ref";
 
         trie.add(prefix);

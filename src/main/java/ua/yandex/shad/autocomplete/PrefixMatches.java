@@ -1,11 +1,8 @@
 package ua.yandex.shad.autocomplete;
 
+import ua.yandex.shad.collections.DynamicList;
 import ua.yandex.shad.tries.RWayTrie;
 import ua.yandex.shad.tries.Trie;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 public class PrefixMatches {
     /*default setting for wordsWithPrefix(String, int)*/
@@ -84,23 +81,11 @@ public class PrefixMatches {
         }
         /*all words with appropriate prefix*/
         Iterable<String> allWordsWithPrefix = trie.wordsWithPrefix(pref);
-        List<String> sorted = new ArrayList<String>();
-        Comparator<String> myComparator = new LengthComparator();
-        /*sample of words with difference length.*/
-        List<String> words = new ArrayList<String>();
-
-        for (String s : allWordsWithPrefix) {
-            sorted.add(s);
-        }
-
-        /*sort words:
-        * 1st priority by length
-        * 2nd priority by alphabet*/
-        sorted.sort(myComparator);
+        DynamicList<String> words = new DynamicList<>();
         /*find the least words with k difference length*/
         int count = 0;
         int maxLength = 0;
-        for (String s : sorted) {
+        for (String s : allWordsWithPrefix) {
             if (s.length() <= maxLength) {
                 words.add(s);
             } else {
@@ -117,17 +102,4 @@ public class PrefixMatches {
     public long size() {
         return trie.size();
     }
-
-    /*own comparator to compare word's length*/
-    private static class LengthComparator implements Comparator<String> {
-        public int compare(String first, String second) {
-            if (first.length() != second.length()) {
-                return first.length() - second.length();
-            } else {
-                return first.compareTo(second);
-            }
-        }
-    }
-
-
 }
