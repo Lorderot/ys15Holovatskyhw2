@@ -8,12 +8,12 @@ import java.util.NoSuchElementException;
  * @author Mykola Holovatsky
  */
 public class DynamicList<T> implements Iterable<T> {
-    private static final int memoryInitiation = 10;
+    private static final int MEMORY_ = 10;
     private T[] array;
     private int size = 1;
 
     public DynamicList() {
-        array = (T[]) new Object[memoryInitiation];
+        array = (T[]) new Object[MEMORY_];
     }
 
     @Override
