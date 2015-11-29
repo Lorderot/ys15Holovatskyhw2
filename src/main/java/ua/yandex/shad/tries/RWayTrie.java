@@ -9,7 +9,7 @@ public class RWayTrie implements Trie {
     public static final int R = 26;
     Node root = new Node(0, "");
     private int size = 0;
-    static class Node extends Tuple{
+    static class Node extends Tuple {
         Node[] next = new Node[R];
         private Node(int weight, String name) {
             super(weight, name);
@@ -36,7 +36,7 @@ public class RWayTrie implements Trie {
 
         /*if it's necessary, create new Tuple*/
         StringBuffer current = new StringBuffer();
-        for (int i = 0; i < length - 1; i++) {
+        for (int i = 0; i < length; i++) {
             char c = wordLowerCase.charAt(i);
             current.append(c);
             if (currentTuple.next[c - 'a'] == null) {
@@ -46,18 +46,9 @@ public class RWayTrie implements Trie {
         }
         /*the tuple that corresponds the last symbol in word should have
         * not negative weight*/
-        char c = wordLowerCase.charAt(length - 1);
-        current.append(c);
-        if (currentTuple.next[c - 'a'] == null) {
-            currentTuple.next[c - 'a'] = new Node(length, current.toString());
-            size++;
-        }
-        else {
-            currentTuple = currentTuple.next[c - 'a'];
-            if (currentTuple.getWeight() == Tuple.NULL) {
-                size++;
-            }
+        if (currentTuple.getWeight() == Tuple.NULL) {
             currentTuple.setWeight(length);
+            size++;
         }
     }
 
@@ -147,7 +138,7 @@ public class RWayTrie implements Trie {
 
         DynamicList<String> list = new DynamicList<>();
         DynamicList<Node> topNode = new DynamicList<>();
-        if (prefix == "") {
+        if (prefix.equals("")) {
             topNode.add(root);
         } else {
             Node[] prefixTuples = checkWordExisting(prefix);
@@ -213,7 +204,8 @@ public class RWayTrie implements Trie {
         return wordTuples;
     }
 
-    private void gatherWords(DynamicList<Node> previousTuples, DynamicList<String> list) {
+    private void gatherWords(DynamicList<Node> previousTuples,
+                             DynamicList<String> list) {
         if (previousTuples.isEmpty()) {
             return;
         }

@@ -1,14 +1,14 @@
 package ua.yandex.shad.collections;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * @author Mykola Holovatsky
  */
 public class DynamicList<T> implements Iterable<T> {
-    private final int memoryInitiation = 10;
+    private static final int memoryInitiation = 10;
     private T[] array;
     private int size = 1;
 
@@ -26,7 +26,10 @@ public class DynamicList<T> implements Iterable<T> {
             }
 
             @Override
-            public T next() {
+            public T next() throws NoSuchElementException {
+                if (pointer >= size) {
+                    throw new NoSuchElementException();
+                }
                 return array[pointer++];
             }
         };
@@ -37,7 +40,7 @@ public class DynamicList<T> implements Iterable<T> {
             array[size++] = element;
         } else {
             T[] extend = (T[]) new Object[array.length * 2];
-            for(int i = 0; i < array.length; i++) {
+            for (int i = 0; i < array.length; i++) {
                 extend[i] = array[i];
             }
             extend[size++] = element;
@@ -46,7 +49,7 @@ public class DynamicList<T> implements Iterable<T> {
     }
 
     public Object[] toArray() {
-        return Arrays.copyOf((Object[])array, size - 1);
+        return Arrays.copyOf((Object[]) array, size - 1);
     }
 
     public boolean isEmpty() {
