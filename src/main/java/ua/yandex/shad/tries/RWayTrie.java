@@ -2,6 +2,7 @@ package ua.yandex.shad.tries;
 
 import ua.yandex.shad.collections.DynamicList;
 
+import java.util.Iterator;
 import java.util.Locale;
 
 public class RWayTrie implements Trie {
@@ -128,8 +129,8 @@ public class RWayTrie implements Trie {
     @Override
     public Iterable<String> words()
     throws IllegalArgumentException, NullPointerException {
-        Iterable<String> container = wordsWithPrefix("");
-        return container;
+        Iterable<String> iterator = wordsWithPrefix("");
+        return iterator;
     }
 
     @Override
@@ -143,14 +144,25 @@ public class RWayTrie implements Trie {
         } else {
             Node[] prefixTuples = checkWordExisting(prefix);
             if (prefixTuples.length < prefix.length()) {
-                return new DynamicList<>();
+                return new Iterable<String>() {
+                    @Override
+                    public Iterator<String> iterator() {
+                        return new DynamicList<String>().iterator();
+                    }
+                };
             }
             topNode.add(prefixTuples[prefixTuples.length - 1]);
         }
 
         /*find all word which begins from prefix*/
         gatherWords(topNode, list);
-        return list;
+        final Iterator<String> iterator = list.iterator();
+        return new Iterable<String>() {
+            @Override
+            public Iterator<String> iterator() {
+                return iterator;
+            }
+        };
     }
 
     @Override
@@ -204,8 +216,8 @@ public class RWayTrie implements Trie {
         return wordTuples;
     }
 
-    private void gatherWords(DynamicList<Node> previousTuples,
-                             DynamicList<String> list) {
+    /*find all words from subTree*/
+    private void gatherWords(DynamicList<Node> previousTuples, DynamicList<String> list) {
         if (previousTuples.isEmpty()) {
             return;
         }

@@ -370,6 +370,36 @@ public class TestRWayTrie {
         assertEquals(trie.size(), count);
     }
 
+    @Test
+    public void testWordsWithPrefix_GettingTwoIteratorsWithDifferentPrefix() {
+        String[] input = {"you", "your", "young", "yours", "youth", "younker",
+                "youngish",  "youngster", "let", "write", "a", "little", "bit",
+                "more", "words", "maybe", "there", "is", "enough", "words", "now"};
+        for (String i : input) {
+            trie.add(i);
+        }
+
+        Iterable<String> container1 = trie.wordsWithPrefix("you");
+        assertNotNull(container1);
+        int result1 = 8;
+
+        Iterable<String> container2 = trie.wordsWithPrefix("l");
+        assertNotNull(container2);
+        int result2 = 2;
+
+        int count = 0;
+        for (String i : container1) {
+            count++;
+        }
+        assertEquals(result1, count);
+
+        count = 0;
+        for (String i : container2) {
+            count++;
+        }
+        assertEquals(result2, count);
+    }
+
     @Test(expected = NullPointerException.class)
     public void testWordsWithPrefix_NullWord() {
         String word = null;

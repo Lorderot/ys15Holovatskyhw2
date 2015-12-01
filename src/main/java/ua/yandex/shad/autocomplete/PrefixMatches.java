@@ -4,6 +4,8 @@ import ua.yandex.shad.collections.DynamicList;
 import ua.yandex.shad.tries.RWayTrie;
 import ua.yandex.shad.tries.Trie;
 
+import java.util.Iterator;
+
 public class PrefixMatches {
     /*default setting for wordsWithPrefix(String, int)*/
     private static final int N = 3;
@@ -96,7 +98,13 @@ public class PrefixMatches {
                 }
             }
         }
-        return words;
+        final Iterator<String> iterator = words.iterator();
+        return new Iterable<String>() {
+            @Override
+            public Iterator<String> iterator() {
+                return iterator;
+            }
+        };
     }
 
     public long size() {
