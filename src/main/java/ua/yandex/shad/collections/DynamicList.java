@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 public class DynamicList<T> implements Iterable<T> {
     private static final int MEMORY_ = 10;
     private T[] array;
-    private int size = 1;
+    private int size;
 
     public DynamicList() {
         array = (T[]) new Object[MEMORY_];
@@ -19,7 +19,8 @@ public class DynamicList<T> implements Iterable<T> {
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
-            private int pointer = 1;
+            private int pointer = 0;
+
             @Override
             public boolean hasNext() {
                 return pointer < size;
@@ -27,9 +28,7 @@ public class DynamicList<T> implements Iterable<T> {
 
             @Override
             public T next() throws NoSuchElementException {
-                if (pointer >= size) {
-                    throw new NoSuchElementException();
-                }
+                checkIndex(pointer);
                 return array[pointer++];
             }
         };
@@ -48,14 +47,33 @@ public class DynamicList<T> implements Iterable<T> {
         }
     }
 
+    public T set(int index, T element) throws NoSuchElementException {
+        checkIndex(index);
+        T replaced = array[index];
+        array[index] = element;
+        return replaced;
+    }
+
+    public T get(int index) throws NoSuchElementException {
+        checkIndex(index);
+        return array[index];
+    }
+
     public Object[] toArray() {
-        return Arrays.copyOf((Object[]) array, size - 1);
+        return Arrays.copyOf((Object[]) array, size);
     }
 
     public boolean isEmpty() {
-        if (size == 1) {
-            return true;
+        return (size == 0);
+    }
+
+    public int size() {
+        return this.size;
+    }
+
+    private void checkIndex(int index) throws NoSuchElementException {
+        if (index < 0 || index >= size) {
+            throw new NoSuchElementException();
         }
-        return false;
     }
 }
