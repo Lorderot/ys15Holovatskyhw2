@@ -11,8 +11,8 @@ public class RWayTrie implements Trie {
     Node root = new Node(0, "");
     private int size = 0;
     static class Node {
-        private Tuple tuple;
         Node[] next = new Node[R];
+        private Tuple tuple;
         private Node(int weight, String name) {
             tuple = new Tuple(weight, name);
         }
@@ -46,7 +46,7 @@ public class RWayTrie implements Trie {
                 }
             }
             currentIndex = -1;
-            if (prefix.getWeight() != Tuple.NULL && prefix.getName() != "") {
+            if (prefix.getWeight() != Tuple.NULL && !prefix.getName().equals("")) {
                 next = prefix.getName();
             } else {
                 next = searchNext();
@@ -92,11 +92,7 @@ public class RWayTrie implements Trie {
         }
 
         private boolean hasNext() {
-            if (next != null) {
-                return true;
-            } else {
-                return false;
-            }
+            return next != null;
         }
     }
 
@@ -253,7 +249,7 @@ public class RWayTrie implements Trie {
             @Override
             public Iterator<String> iterator() {
                 return new Iterator<String>() {
-                    LazySearch searcher = new LazySearch(lastNodeInPrefix);
+                    private LazySearch searcher = new LazySearch(lastNodeInPrefix);
                     @Override
                     public boolean hasNext() {
                         return searcher.hasNext();

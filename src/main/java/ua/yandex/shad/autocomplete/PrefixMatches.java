@@ -1,6 +1,5 @@
 package ua.yandex.shad.autocomplete;
 
-import ua.yandex.shad.collections.DynamicList;
 import ua.yandex.shad.tries.RWayTrie;
 import ua.yandex.shad.tries.Trie;
 
@@ -11,6 +10,50 @@ public class PrefixMatches {
     private static final int N = 3;
 
     private Trie trie;
+
+    static private class PrefixIterable implements Iterable<String> {
+        final Iterator<String> allWordsWithPrefix;
+        final int numberOfDifferentLengths;
+        private PrefixIterable(Iterable<String> allWordsWithPrefix,
+                               int numberOfDifferentLengths) {
+            this.allWordsWithPrefix = allWordsWithPrefix.iterator();
+            this.numberOfDifferentLengths = numberOfDifferentLengths;
+        }
+
+        @Override
+        public Iterator<String> iterator() {
+            return new Iterator<String>() {
+                private int count = 0;
+                private int maxLength = 0;
+                private String next = null;
+                @Override
+                public boolean hasNext() {
+                    if (count == numberOfDifferentLengths && (next == null
+                            || next.length() > maxLength)) {
+                        return false;
+                    }
+                    return allWordsWithPrefix.hasNext();
+                }
+
+                @Override
+                public String next() {
+                    String current = next;
+                    if (current == null) {
+                        current = allWordsWithPrefix.next();
+                    }
+                    next = allWordsWithPrefix.next();
+                    if (current.length() > maxLength) {
+                        maxLength = current.length();
+                        count++;
+                    }
+                    if (count > numberOfDifferentLengths) {
+                        current = null;
+                    }
+                    return current;
+                }
+            };
+        }
+    }
 
     public PrefixMatches(Trie trie) {
             this.trie = trie;
@@ -82,42 +125,12 @@ public class PrefixMatches {
             throw new NullPointerException();
         }
         /*iterator for words with appropriate prefix*/
-        final Iterator<String> allWordsWithPrefix = trie.wordsWithPrefix(pref).iterator();
-        final int numberOfDifferentWords = k;
-
+        final PrefixIterable prefixIterable =
+                new PrefixIterable(trie.wordsWithPrefix(pref), k);
         return new Iterable<String>() {
             @Override
             public Iterator<String> iterator() {
-                return new Iterator<String>() {
-                    int count = 0;
-                    int maxLength = 0;
-                    String next = null;
-                    @Override
-                    public boolean hasNext() {
-                        if (count == numberOfDifferentWords && (next == null
-                                || next.length() > maxLength)) {
-                            return false;
-                        }
-                        return (allWordsWithPrefix.hasNext());
-                    }
-
-                    @Override
-                    public String next() {
-                        String current = next;
-                        if (current == null) {
-                            current = allWordsWithPrefix.next();
-                        }
-                        next = allWordsWithPrefix.next();
-                        if (current.length() > maxLength) {
-                            maxLength = current.length();
-                            count++;
-                        }
-                        if (count > numberOfDifferentWords) {
-                            current = null;
-                        }
-                        return current;
-                    }
-                };
+                return prefixIterable.iterator();
             }
         };
     }
