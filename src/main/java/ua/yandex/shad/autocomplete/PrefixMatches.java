@@ -81,28 +81,43 @@ public class PrefixMatches {
         if (pref == null) {
             throw new NullPointerException();
         }
-        /*all words with appropriate prefix*/
-        Iterable<String> allWordsWithPrefix = trie.wordsWithPrefix(pref);
-        DynamicList<String> words = new DynamicList<>();
-        /*find the least words with k difference length*/
-        int count = 0;
-        int maxLength = 0;
-        for (String s : allWordsWithPrefix) {
-            if (s.length() <= maxLength) {
-                words.add(s);
-            } else {
-                if (count < k) {
-                    maxLength = s.length();
-                    count++;
-                    words.add(s);
-                }
-            }
-        }
-        final Iterator<String> iterator = words.iterator();
+        /*iterator for words with appropriate prefix*/
+        final Iterator<String> allWordsWithPrefix = trie.wordsWithPrefix(pref).iterator();
+        final int numberOfDifferentWords = k;
+
         return new Iterable<String>() {
             @Override
             public Iterator<String> iterator() {
-                return iterator;
+                return new Iterator<String>() {
+                    int count = 0;
+                    int maxLength = 0;
+                    String next = null;
+                    @Override
+                    public boolean hasNext() {
+                        if (count == numberOfDifferentWords && (next == null
+                                || next.length() > maxLength)) {
+                            return false;
+                        }
+                        return (allWordsWithPrefix.hasNext());
+                    }
+
+                    @Override
+                    public String next() {
+                        String current = next;
+                        if (current == null) {
+                            current = allWordsWithPrefix.next();
+                        }
+                        next = allWordsWithPrefix.next();
+                        if (current.length() > maxLength) {
+                            maxLength = current.length();
+                            count++;
+                        }
+                        if (count > numberOfDifferentWords) {
+                            current = null;
+                        }
+                        return current;
+                    }
+                };
             }
         };
     }

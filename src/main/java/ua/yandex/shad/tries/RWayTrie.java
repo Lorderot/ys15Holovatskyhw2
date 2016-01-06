@@ -72,7 +72,7 @@ public class RWayTrie implements Trie {
             DynamicList<Node> nextRaw = new DynamicList<>();
             for (Node i : currentRowOfTuples) {
                 for (Node j : i.next) {
-                    if (j != null ) {
+                    if (j != null) {
                         nextRaw.add(j);
                     }
                 }
@@ -246,7 +246,8 @@ public class RWayTrie implements Trie {
             };
         }
 
-        final Node lastNodeInPrefix = prefixWayInTrie[prefixWayInTrie.length - 1];
+        final Node lastNodeInPrefix =
+                prefixWayInTrie[prefixWayInTrie.length - 1];
 
         return new Iterable<String>() {
             @Override
