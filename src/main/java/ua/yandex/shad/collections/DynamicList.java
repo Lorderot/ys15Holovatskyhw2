@@ -28,6 +28,9 @@ public class DynamicList<T> implements Iterable<T> {
 
             @Override
             public T next() throws NoSuchElementException {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
                 checkIndex(pointer);
                 return array[pointer++];
             }

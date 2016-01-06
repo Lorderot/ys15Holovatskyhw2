@@ -33,7 +33,7 @@ public class RWayTrie implements Trie {
         }
     }
 
-    private class LazySearch {
+    static private class LazySearch implements Iterable<String> {
         private String next;
         private DynamicList<Node> currentRowOfTuples;
         private int currentIndex;
@@ -46,7 +46,8 @@ public class RWayTrie implements Trie {
                 }
             }
             currentIndex = -1;
-            if (prefix.getWeight() != Tuple.NULL && !prefix.getName().equals("")) {
+            if (prefix.getWeight() != Tuple.NULL
+                    && !prefix.getName().equals("")) {
                 next = prefix.getName();
             } else {
                 next = searchNext();
@@ -85,14 +86,21 @@ public class RWayTrie implements Trie {
             return true;
         }
 
-        private String next() {
-            String current = next;
-            next = searchNext();
-            return current;
-        }
+        @Override
+        public Iterator<String> iterator() {
+            return new Iterator<String>() {
+                @Override
+                public boolean hasNext() {
+                    return next != null;
+                }
 
-        private boolean hasNext() {
-            return next != null;
+                @Override
+                public String next() {
+                    String current = next;
+                    next = searchNext();
+                    return current;
+                }
+            };
         }
     }
 
@@ -237,7 +245,17 @@ public class RWayTrie implements Trie {
             return new Iterable<String>() {
                 @Override
                 public Iterator<String> iterator() {
-                    return new DynamicList<String>().iterator();
+                    return new Iterator<String>() {
+                        @Override
+                        public boolean hasNext() {
+                            return false;
+                        }
+
+                        @Override
+                        public String next() {
+                            return null;
+                        }
+                    };
                 }
             };
         }
@@ -245,23 +263,7 @@ public class RWayTrie implements Trie {
         final Node lastNodeInPrefix =
                 prefixWayInTrie[prefixWayInTrie.length - 1];
 
-        return new Iterable<String>() {
-            @Override
-            public Iterator<String> iterator() {
-                return new Iterator<String>() {
-                    private LazySearch searcher = new LazySearch(lastNodeInPrefix);
-                    @Override
-                    public boolean hasNext() {
-                        return searcher.hasNext();
-                    }
-
-                    @Override
-                    public String next() {
-                        return searcher.next();
-                    }
-                };
-            }
-        };
+        return new LazySearch(lastNodeInPrefix);
     }
 
     @Override

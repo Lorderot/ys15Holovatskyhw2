@@ -11,9 +11,9 @@ public class PrefixMatches {
 
     private Trie trie;
 
-    static private class PrefixIterable implements Iterable<String> {
-        final Iterator<String> allWordsWithPrefix;
-        final int numberOfDifferentLengths;
+    private static class PrefixIterable implements Iterable<String> {
+        private final Iterator<String> allWordsWithPrefix;
+        private final int numberOfDifferentLengths;
         private PrefixIterable(Iterable<String> allWordsWithPrefix,
                                int numberOfDifferentLengths) {
             this.allWordsWithPrefix = allWordsWithPrefix.iterator();
@@ -125,14 +125,7 @@ public class PrefixMatches {
             throw new NullPointerException();
         }
         /*iterator for words with appropriate prefix*/
-        final PrefixIterable prefixIterable =
-                new PrefixIterable(trie.wordsWithPrefix(pref), k);
-        return new Iterable<String>() {
-            @Override
-            public Iterator<String> iterator() {
-                return prefixIterable.iterator();
-            }
-        };
+        return new PrefixIterable(trie.wordsWithPrefix(pref), k);
     }
 
     public long size() {
