@@ -4,6 +4,7 @@ import ua.yandex.shad.collections.DynamicList;
 
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 
 public class RWayTrie implements Trie {
     /*R is the power of alphabet*/
@@ -33,7 +34,7 @@ public class RWayTrie implements Trie {
         }
     }
 
-    static private class LazySearch implements Iterable<String> {
+    private static class LazySearch implements Iterable<String> {
         private String next;
         private DynamicList<Node> currentRowOfTuples;
         private int currentIndex;
@@ -96,6 +97,9 @@ public class RWayTrie implements Trie {
 
                 @Override
                 public String next() {
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
                     String current = next;
                     next = searchNext();
                     return current;
