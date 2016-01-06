@@ -175,7 +175,7 @@ public class TestRWayTrie {
         assertEquals(true, result);
 
         word = word.toLowerCase(Locale.ENGLISH);
-        Tuple deletedTuple = trie.root.next[word.charAt(0) - 'a'];
+        RWayTrie.Node deletedTuple = trie.root.next[word.charAt(0) - 'a'];
         assertEquals(null, deletedTuple);
     }
 

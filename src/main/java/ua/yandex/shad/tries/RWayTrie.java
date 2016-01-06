@@ -10,13 +10,93 @@ public class RWayTrie implements Trie {
     public static final int R = 26;
     Node root = new Node(0, "");
     private int size = 0;
-    static class Node extends Tuple {
+    static class Node {
+        private Tuple tuple;
         Node[] next = new Node[R];
         private Node(int weight, String name) {
-            super(weight, name);
+            tuple = new Tuple(weight, name);
         }
         private Node(String name) {
-            super(name);
+            tuple = new Tuple(name);
+        }
+
+        private void setWeight(int value) {
+            tuple.setWeight(value);
+        }
+
+        int getWeight() {
+            return tuple.getWeight();
+        }
+
+        private String getName() {
+            return tuple.getName();
+        }
+    }
+
+    private class LazySearch {
+        private String next;
+        private DynamicList<Node> currentRowOfTuples;
+        private int currentIndex;
+
+        private LazySearch(Node prefix) {
+            currentRowOfTuples = new DynamicList<>();
+            for (int i = 0; i < prefix.next.length; i++) {
+                if (prefix.next[i] != null) {
+                    currentRowOfTuples.add(prefix.next[i]);
+                }
+            }
+            currentIndex = -1;
+            if (prefix.getWeight() != Tuple.NULL && prefix.getName() != "") {
+                next = prefix.getName();
+            } else {
+                next = searchNext();
+            }
+        }
+
+        private String searchNext() {
+            for (int i = currentIndex + 1; i < currentRowOfTuples.size(); i++) {
+                Node currentTuple = currentRowOfTuples.get(i);
+                if (currentTuple.getWeight() != Tuple.NULL) {
+                    currentIndex = i;
+                    return currentTuple.getName();
+                }
+            }
+            if (!formNextRaw()) {
+                return null;
+            } else {
+                return searchNext();
+            }
+        }
+
+        private boolean formNextRaw() {
+            DynamicList<Node> nextRaw = new DynamicList<>();
+            for (Node i : currentRowOfTuples) {
+                for (Node j : i.next) {
+                    if (j != null ) {
+                        nextRaw.add(j);
+                    }
+                }
+            }
+            if (nextRaw.size() == 0) {
+                return false;
+            }
+            currentRowOfTuples = nextRaw;
+            currentIndex = -1;
+            return true;
+        }
+
+        private String next() {
+            String current = next;
+            next = searchNext();
+            return current;
+        }
+
+        private boolean hasNext() {
+            if (next != null) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -29,14 +109,18 @@ public class RWayTrie implements Trie {
         if (word.equals("")) {
             return;
         }
-        checkWordCorrectness(word);
+
+        if (!checkWordCorrectness(word)) {
+            throw new IllegalArgumentException("word contain "
+                    + "non-English symbol");
+        }
         /*tuple that corresponds symbol in the word*/
         Node currentTuple = root;
         int length = word.length();
         String wordLowerCase = word.toLowerCase(Locale.ENGLISH);
 
         /*if it's necessary, create new Tuple*/
-        StringBuffer current = new StringBuffer();
+        StringBuilder current = new StringBuilder();
         for (int i = 0; i < length; i++) {
             char c = wordLowerCase.charAt(i);
             current.append(c);
@@ -56,15 +140,21 @@ public class RWayTrie implements Trie {
     @Override
     public boolean contains(String word)
             throws NullPointerException, IllegalArgumentException {
+        if (word == null) {
+            throw new NullPointerException();
+        }
+
+        if (!checkWordCorrectness(word)) {
+            throw new IllegalArgumentException("word contain "
+                    + "non-English symbol");
+        }
+
         /*The way of Tuples that corresponds to word*/
         Node[] wordTuples = null;
-        try {
-            wordTuples = checkWordExisting(word);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Trie doesn't contain word "
-                    + "with non-English symbols");
-        }
-        /*if word = "", checkWordExisting will return root*/
+
+        wordTuples = wordWayInTrie(word);
+
+        /*if word = "", wordWayInTrie() will return root*/
         int length;
         if (word.length() != 0) {
             length = word.length();
@@ -96,7 +186,7 @@ public class RWayTrie implements Trie {
         }
 
         /*The way of Tuples that corresponds to word*/
-        Node[] wordTuples = checkWordExisting(word);
+        Node[] wordTuples = wordWayInTrie(word);
         int length = word.length();
         String wordLowerCase = word.toLowerCase(Locale.ENGLISH);
         size--;
@@ -136,31 +226,43 @@ public class RWayTrie implements Trie {
     @Override
     public Iterable<String> wordsWithPrefix(String prefix)
             throws IllegalArgumentException, NullPointerException {
-
-        DynamicList<String> list = new DynamicList<>();
-        DynamicList<Node> topNode = new DynamicList<>();
-        if (prefix.equals("")) {
-            topNode.add(root);
-        } else {
-            Node[] prefixTuples = checkWordExisting(prefix);
-            if (prefixTuples.length < prefix.length()) {
-                return new Iterable<String>() {
-                    @Override
-                    public Iterator<String> iterator() {
-                        return new DynamicList<String>().iterator();
-                    }
-                };
-            }
-            topNode.add(prefixTuples[prefixTuples.length - 1]);
+        if (prefix == null) {
+            throw new NullPointerException();
         }
 
-        /*find all word which begins from prefix*/
-        gatherWords(topNode, list);
-        final Iterator<String> iterator = list.iterator();
+        if (!checkWordCorrectness(prefix)) {
+            throw new IllegalArgumentException("word contain "
+                    + "non-English symbol");
+        }
+
+        Node[] prefixWayInTrie = wordWayInTrie(prefix);
+
+        if (prefixWayInTrie.length == 0) {
+            return new Iterable<String>() {
+                @Override
+                public Iterator<String> iterator() {
+                    return new DynamicList<String>().iterator();
+                }
+            };
+        }
+
+        final Node lastNodeInPrefix = prefixWayInTrie[prefixWayInTrie.length - 1];
+
         return new Iterable<String>() {
             @Override
             public Iterator<String> iterator() {
-                return iterator;
+                return new Iterator<String>() {
+                    LazySearch searcher = new LazySearch(lastNodeInPrefix);
+                    @Override
+                    public boolean hasNext() {
+                        return searcher.hasNext();
+                    }
+
+                    @Override
+                    public String next() {
+                        return searcher.next();
+                    }
+                };
             }
         };
     }
@@ -171,32 +273,26 @@ public class RWayTrie implements Trie {
     }
 
     /*check whether all symbols are from English alphabet*/
-    private void checkWordCorrectness(String word)
-            throws IllegalArgumentException, NullPointerException {
+    private boolean checkWordCorrectness(String word) {
         String wordLowerCase = word.toLowerCase(Locale.ENGLISH);
         for (int i = 0; i < word.length(); i++) {
             char c = wordLowerCase.charAt(i);
             if (c < 'a' || c > 'z') {
-                throw new IllegalArgumentException("word contain "
-                        + "non-English symbol");
+                return false;
             }
         }
+        return true;
     }
 
     /*Return the Tuples way that corresponds to the word.
      If any Tuple does not exist, return the empty way.
       Throw exception if word with non-English symbols*/
-    private Node[] checkWordExisting(String word)
-            throws NullPointerException, IllegalArgumentException {
-        if (word == null) {
-            throw new NullPointerException();
-        }
+    private Node[] wordWayInTrie(String word) {
 
         if (word.equals("")) {
             Node[] wordTuples = {root};
             return wordTuples;
         }
-        checkWordCorrectness(word);
 
         int length = word.length();
         Node[] wordTuples = new Node[length];
@@ -214,24 +310,5 @@ public class RWayTrie implements Trie {
             return new Node[0];
         }
         return wordTuples;
-    }
-
-    /*find all words from subTree*/
-    private void gatherWords(DynamicList<Node> previousTuples, DynamicList<String> list) {
-        if (previousTuples.isEmpty()) {
-            return;
-        }
-        DynamicList<Node> currentTuples = new DynamicList<>();
-        for (Node i : previousTuples) {
-            if (i.getWeight() > 0) {
-                list.add(i.getName());
-            }
-            for (int j = 0; j < R; j++) {
-                if (i.next[j] != null) {
-                    currentTuples.add(i.next[j]);
-                }
-            }
-        }
-        gatherWords(currentTuples, list);
     }
 }
