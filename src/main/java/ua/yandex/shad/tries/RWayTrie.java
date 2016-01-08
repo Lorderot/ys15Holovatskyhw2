@@ -2,9 +2,7 @@ package ua.yandex.shad.tries;
 
 import ua.yandex.shad.collections.DynamicList;
 
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class RWayTrie implements Trie {
     /*R is the power of alphabet*/
@@ -35,35 +33,20 @@ public class RWayTrie implements Trie {
     }
 
     private static class LazySearch implements Iterable<String> {
-        private Node nextWord = null;
         private DynamicList<Node> nodesContainer;
         private Iterator<Node> nextNodes;
 
-        private LazySearch(Node prefix) {
+        private LazySearch(Node prefix) throws IllegalArgumentException {
+            if (prefix == null) {
+                throw new IllegalArgumentException();
+            }
             nodesContainer = new DynamicList<>();
             nextNodes = nodesContainer.iterator();
-            for (int i = 0; i < prefix.next.length; i++) {
-                if (prefix.next[i] != null) {
-                    nodesContainer.add(prefix.next[i]);
-                }
-            }
-            if (prefix.getWeight() != Tuple.NULL
-                    && !prefix.getName().equals("")) {
-                nextWord = prefix;
+            if (!prefix.getName().equals("")) {
+                nodesContainer.add(prefix);
             } else {
-                nextWord = searchNext();
+                addNextNodes(prefix);
             }
-        }
-
-        private Node searchNext() {
-            while (nextNodes.hasNext()) {
-                Node i = nextNodes.next();
-                addNextNodes(i);
-                if (i.getWeight() != Tuple.NULL) {
-                    return i;
-                }
-            }
-            return null;
         }
 
         private void addNextNodes(Node from) {
@@ -79,7 +62,7 @@ public class RWayTrie implements Trie {
             return new Iterator<String>() {
                 @Override
                 public boolean hasNext() {
-                    return nextWord != null;
+                    return nextNodes.hasNext();
                 }
 
                 @Override
@@ -87,9 +70,13 @@ public class RWayTrie implements Trie {
                     if (!hasNext()) {
                         throw new NoSuchElementException();
                     }
-                    Node current = nextWord;
-                    nextWord = searchNext();
-                    return current.getName();
+                    while (true) {
+                        Node current = nextNodes.next();
+                        addNextNodes(current);
+                        if (current.getWeight() != Tuple.NULL) {
+                            return current.getName();
+                        }
+                    }
                 }
             };
         }
@@ -238,7 +225,6 @@ public class RWayTrie implements Trie {
 
         final Node lastNodeInPrefix =
                 prefixWayInTrie[prefixWayInTrie.length - 1];
-
         return new LazySearch(lastNodeInPrefix);
     }
 
