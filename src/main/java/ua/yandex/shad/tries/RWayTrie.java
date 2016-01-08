@@ -2,7 +2,9 @@ package ua.yandex.shad.tries;
 
 import ua.yandex.shad.collections.DynamicList;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.NoSuchElementException;
 
 public class RWayTrie implements Trie {
     /*R is the power of alphabet*/
