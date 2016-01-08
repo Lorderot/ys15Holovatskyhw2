@@ -304,11 +304,7 @@ public class TestRWayTrie {
     public void testWordsWithPrefix_EmptyTrie() {
         String prefix = "prefix";
         Iterable<String> container = trie.wordsWithPrefix(prefix);
-        int size = 0;
-        for (String s : container) {
-            size++;
-        }
-        assertEquals(0, size);
+        assertNull(container);
     }
 
     @Test
@@ -415,11 +411,7 @@ public class TestRWayTrie {
         trie.add("referee");
 
         Iterable<String> container = trie.wordsWithPrefix(prefix);
-        int size = 0;
-        for (String s : container) {
-            size++;
-        }
-        assertEquals(0, size);
+        assertNull(container);
     }
 
     @Test

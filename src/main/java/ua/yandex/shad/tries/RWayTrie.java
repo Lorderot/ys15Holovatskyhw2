@@ -35,56 +35,43 @@ public class RWayTrie implements Trie {
     }
 
     private static class LazySearch implements Iterable<String> {
-        private String next;
-        private DynamicList<Node> currentRowOfTuples;
-        private int currentIndex;
+        private Node nextWord = null;
+        private DynamicList<Node> nodesContainer;
+        private Iterator<Node> nextNodes;
 
         private LazySearch(Node prefix) {
-            currentRowOfTuples = new DynamicList<>();
+            nodesContainer = new DynamicList<>();
+            nextNodes = nodesContainer.iterator();
             for (int i = 0; i < prefix.next.length; i++) {
                 if (prefix.next[i] != null) {
-                    currentRowOfTuples.add(prefix.next[i]);
+                    nodesContainer.add(prefix.next[i]);
                 }
             }
-            currentIndex = -1;
             if (prefix.getWeight() != Tuple.NULL
                     && !prefix.getName().equals("")) {
-                next = prefix.getName();
+                nextWord = prefix;
             } else {
-                next = searchNext();
+                nextWord = searchNext();
             }
         }
 
-        private String searchNext() {
-            for (int i = currentIndex + 1; i < currentRowOfTuples.size(); i++) {
-                Node currentTuple = currentRowOfTuples.get(i);
-                if (currentTuple.getWeight() != Tuple.NULL) {
-                    currentIndex = i;
-                    return currentTuple.getName();
+        private Node searchNext() {
+            while (nextNodes.hasNext()) {
+                Node i = nextNodes.next();
+                addNextNodes(i);
+                if (i.getWeight() != Tuple.NULL) {
+                    return i;
                 }
             }
-            if (!formNextRaw()) {
-                return null;
-            } else {
-                return searchNext();
-            }
+            return null;
         }
 
-        private boolean formNextRaw() {
-            DynamicList<Node> nextRaw = new DynamicList<>();
-            for (Node i : currentRowOfTuples) {
-                for (Node j : i.next) {
-                    if (j != null) {
-                        nextRaw.add(j);
-                    }
+        private void addNextNodes(Node from) {
+            for (Node i : from.next) {
+                if (i != null) {
+                    nodesContainer.add(i);
                 }
             }
-            if (nextRaw.size() == 0) {
-                return false;
-            }
-            currentRowOfTuples = nextRaw;
-            currentIndex = -1;
-            return true;
         }
 
         @Override
@@ -92,7 +79,7 @@ public class RWayTrie implements Trie {
             return new Iterator<String>() {
                 @Override
                 public boolean hasNext() {
-                    return next != null;
+                    return nextWord != null;
                 }
 
                 @Override
@@ -100,9 +87,9 @@ public class RWayTrie implements Trie {
                     if (!hasNext()) {
                         throw new NoSuchElementException();
                     }
-                    String current = next;
-                    next = searchNext();
-                    return current;
+                    Node current = nextWord;
+                    nextWord = searchNext();
+                    return current.getName();
                 }
             };
         }
@@ -246,22 +233,7 @@ public class RWayTrie implements Trie {
         Node[] prefixWayInTrie = wordWayInTrie(prefix);
 
         if (prefixWayInTrie.length == 0) {
-            return new Iterable<String>() {
-                @Override
-                public Iterator<String> iterator() {
-                    return new Iterator<String>() {
-                        @Override
-                        public boolean hasNext() {
-                            return false;
-                        }
-
-                        @Override
-                        public String next() {
-                            return null;
-                        }
-                    };
-                }
-            };
+            return null;
         }
 
         final Node lastNodeInPrefix =
